@@ -282,7 +282,7 @@
         <p style="text-align: center; color: #b56576; font-size: 12px; margin-top: 0; padding: 0 10px;">각 영역의 📷 카메라 버튼을 눌러 지정된 부스 QR코드를 스캔하세요!</p>
         
         <div class="bingo-board" id="bingoBoard"></div>
-        <button class="submit-btn" id="submitBingo" disabled onclick="submitPrize()">🎁 보상 상품 교환 신청</button>
+        <button class="submit-btn" id="submitBingo" disabled onclick="submitPrize()">🎁 제출하기</button>
     </div>
 </div>
 
@@ -373,10 +373,10 @@
         { id: 30, name: "본부부스", category: "본부", loc: "본관 2층 (201/202강의실)" }
     ];
 
-    // ⭐ 요청받은 특정 QR 코드 키워드 (오픈카톡 URL / s8b2k5hi)
-    const TARGET_QR_KEYWORD = "s8b2k5hi";
+    // ⭐ 요청받은 카카오톡 QR 핵심 플래그
+    const TARGET_QR_KEYWORD = "TARGET_KAKAO_CHAT";
 
-    // 9개 칸 구성 (과학, 사회, 예체능, 자율 4개만 TARGET_QR_KEYWORD 등록, 나머지 2개는 등록 안됨)
+    // 9개 칸 구성 (과학, 사회, 예체능, 자율 4개만 해당 QR 승인, 나머지 2개는 거부)
     const bingoLayout = [
         { id: "cell_0", label: "과학", req: true, keyword: TARGET_QR_KEYWORD },
         { id: "cell_1", label: "사회", req: true, keyword: TARGET_QR_KEYWORD },
@@ -503,21 +503,28 @@
         }
     }
 
-    // ⭐ 엄격한 QR 스캔 검증 로직
+    // ⭐ 카카오톡 URL 및 다양한 대소문자 형태 완벽 인식 로직
     function onScanSuccess(decodedText) {
         if (isProcessingScan) return;
         isProcessingScan = true;
 
-        let scannedText = decodedText.trim().toLowerCase();
-        
+        let rawText = decodedText.trim();
+        let lowerText = rawText.toLowerCase();
+
         if (currentScanningCell) {
             const requiredKeyword = currentScanningCell.keyword;
 
-            // 등록된 키워드와 일치할 때만 승인
-            if (requiredKeyword && requiredKeyword !== "UNREGISTERED_NONE" && scannedText.includes(requiredKeyword)) {
-                saveStamp(currentScanningCell.id, currentScanningCell.label);
+            if (requiredKeyword === "TARGET_KAKAO_CHAT") {
+                // 오픈카카오 URL 도메인 또는 해시 키워드가 들어가 있는지 판별
+                if (lowerText.includes("open.kakao.com") || lowerText.includes("s8b2k5hi")) {
+                    saveStamp(currentScanningCell.id, currentScanningCell.label);
+                } else {
+                    alert("❌ 올바른 부스 QR 코드가 아닙니다!");
+                    setTimeout(() => { isProcessingScan = false; }, 1500);
+                }
             } else {
-                alert("❌ 올바른 부스 QR 코드가 아닙니다!\n지정된 QR 코드를 스캔해주세요.");
+                // 등록되지 않은 2개 칸
+                alert("❌ 아직 QR 코드가 등록되지 않은 부스입니다!");
                 setTimeout(() => { isProcessingScan = false; }, 1500);
             }
         }
@@ -650,7 +657,7 @@
     }
 
     function submitPrize() {
-        alert(`🎉 제출 완료!\n운영 본부석으로 보내집니다.`);
+        alert(`🎉 제출이 완료되었습니다!\n운영 본부석(본관 2층 201/202강의실)에서 확인 후 상품을 수령하세요.`);
     }
 </script>
 </body>
