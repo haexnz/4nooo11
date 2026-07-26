@@ -158,27 +158,31 @@
         /* 마이페이지 / 빙고 */
         .mypage-panel { background: var(--card-bg); padding: 22px 15px; border-radius: 22px; box-shadow: var(--card-shadow); margin-top: 20px; border: 1px solid #ffccd5; text-align: center; }
         
-        .qr-scanner-box { max-width: 100%; margin: 15px auto; border-radius: 14px; overflow: hidden; border: 2px dashed #e5989b; background: #fff9fa; }
-        .scan-toggle-btn { background: #b56576; color: white; border: none; padding: 11px 18px; border-radius: 12px; font-weight: 600; cursor: pointer; display: block; margin: 0 auto 15px auto; font-size: 14px; }
-
         .bingo-board { 
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%;
-            max-width: 340px; margin: 15px auto; padding: 10px; background: #fff0f3; 
+            max-width: 360px; margin: 15px auto; padding: 10px; background: #fff0f3; 
             border-radius: 18px; border: 1px solid #ffccd5;
         }
         .cell { 
             aspect-ratio: 1 / 1; width: 100%; background: white; border: 1.5px solid #ffccd5; 
-            border-radius: 14px; display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            border-radius: 14px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; 
             font-weight: 600; font-size: 12px; position: relative; text-align: center; 
-            padding: 4px; color: #6d6875; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
+            padding: 8px 4px; color: #6d6875; box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
             line-height: 1.2;
         }
         .cell .cat-tag { font-size: 10px; color: #b56576; font-weight: normal; margin-top: 2px; }
 
+        .cell-scan-btn {
+            background: #b56576; color: white; border: none; padding: 4px 8px;
+            border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer;
+            margin-top: 4px; transition: 0.2s; width: 90%;
+        }
+        .cell-scan-btn:hover { background: #d47a8f; }
+
         .cell.checked { background: #ffe5ec; border-color: #e5989b; color: #b56576; }
-        .cell.checked::after { content: '⭐ 완료'; position: absolute; bottom: 3px; font-size: 9px; font-weight: bold; color: #b56576; }
+        .cell-stamp-tag { color: #b56576; font-size: 11px; font-weight: bold; margin-top: 4px; }
         
-        .submit-btn { background: #e5989b; color: white; border: none; padding: 14px; font-size: 14px; border-radius: 12px; cursor: pointer; width: 100%; max-width: 340px; margin: 12px auto 0 auto; display: block; font-weight: bold; }
+        .submit-btn { background: #e5989b; color: white; border: none; padding: 14px; font-size: 14px; border-radius: 12px; cursor: pointer; width: 100%; max-width: 360px; margin: 12px auto 0 auto; display: block; font-weight: bold; }
         .submit-btn:disabled { background: #ffccd5; color: #ffffff; cursor: not-allowed; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(109, 104, 117, 0.4); justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(3px); }
@@ -206,6 +210,12 @@
             z-index: 999;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
         }
+
+        /* QR 카메라 팝업 */
+        .qr-modal-content {
+            background: white; padding: 20px; border-radius: 20px; width: 90%; max-width: 360px; text-align: center; position: relative;
+        }
+        #qr-reader-modal { width: 100%; border-radius: 12px; overflow: hidden; border: 2px dashed #e5989b; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -269,12 +279,7 @@
 
     <div class="mypage-panel">
         <h2 style="text-align: center; margin-bottom: 4px; font-size: 18px; color: var(--primary-color);">🌸 스탬프 빙고 투어</h2>
-        <p style="text-align: center; color: #b56576; font-size: 12px; margin-top: 0; padding: 0 10px;">부스 QR코드를 인식하면 스탬프가 자동으로 저장됩니다!</p>
-        
-        <button class="scan-toggle-btn" id="scanCtrlBtn" onclick="toggleQRScanner()">📷 부스 QR 스캔 시작</button>
-        <div class="qr-scanner-box">
-            <div id="qr-reader" style="width: 100%;"></div>
-        </div>
+        <p style="text-align: center; color: #b56576; font-size: 12px; margin-top: 0; padding: 0 10px;">각 영역의 📷 카메라 버튼을 눌러 지정된 부스 QR코드를 스캔하세요!</p>
         
         <div class="bingo-board" id="bingoBoard"></div>
         <button class="submit-btn" id="submitBingo" disabled onclick="submitPrize()">🎁 보상 상품 교환 신청</button>
@@ -283,6 +288,16 @@
 
 <div class="footer-banner">
     함께 즐기는 동아리 박람회 ❤️
+</div>
+
+<!-- QR 스캔 모달 -->
+<div id="qrModal" class="modal">
+    <div class="qr-modal-content">
+        <span class="close-btn" onclick="closeQRModal()">&times;</span>
+        <h3 id="qrModalTitle" style="color: #b56576; margin-top: 0;">📷 부스 QR 스캔</h3>
+        <p style="font-size: 12px; color: #6d6875; margin-bottom: 8px;">부스에 설치된 QR 코드를 비춰주세요.</p>
+        <div id="qr-reader-modal"></div>
+    </div>
 </div>
 
 <div id="addModal" class="modal">
@@ -321,12 +336,10 @@
 </div>
 
 <script>
-    // 로그인 허용 목록
     const allowedStudents = {
         "10101": "김하은"
     };
 
-    // 동아리 데이터 목록
     let boothList = [
         { id: 1, name: "도서부", category: "보건 의료 도서 방송", loc: "이동수업실 3" },
         { id: 2, name: "방송부", category: "보건 의료 도서 방송", loc: "이동수업실 2" },
@@ -360,19 +373,23 @@
         { id: 30, name: "본부부스", category: "본부", loc: "본관 2층 (201/202강의실)" }
     ];
 
-    // 빙고판 9칸 설정
+    // ⭐ 요청받은 특정 QR 코드 키워드 (s8b2k5hi)
+    const TARGET_QR_KEYWORD = "s8b2k5hi";
+
+    // 9개 칸 구성 (과학, 사회, 예체능, 자율 4개에 지정 QR 승인 적용)
     const bingoLayout = [
-        { type: "fixed", label: "과학", targetCategory: "과학", req: true },                  // cell_0
-        { type: "fixed", label: "사회", targetCategory: "사회 경제 언론", req: true },         // cell_1
-        { type: "fixed", label: "예체능", targetCategory: "예체능", req: true },               // cell_2
-        { type: "fixed", label: "교육·수학<br>진로·건축", targetCategory: "교육 수학 진로 건축", req: true }, // cell_3
-        { type: "free", label: "자율", req: false },                                            // cell_4
-        { type: "free", label: "자율", req: false },                                            // cell_5
-        { type: "fixed", label: "보건·의료<br>도서·방송", targetCategory: "보건 의료 도서 방송", req: true }, // cell_6
-        { type: "free", label: "자율", req: false },                                            // cell_7
-        { type: "free", label: "자율", req: false }                                             // cell_8
+        { id: "cell_0", label: "과학", req: true, keyword: TARGET_QR_KEYWORD },
+        { id: "cell_1", label: "사회", req: true, keyword: TARGET_QR_KEYWORD },
+        { id: "cell_2", label: "예체능", req: true, keyword: TARGET_QR_KEYWORD },
+        { id: "cell_3", label: "교육·수학<br>진로·건축", req: true, keyword: null },
+        { id: "cell_4", label: "자율", req: false, keyword: TARGET_QR_KEYWORD },
+        { id: "cell_5", label: "자율", req: false, keyword: TARGET_QR_KEYWORD },
+        { id: "cell_6", label: "보건·의료<br>도서·방송", req: true, keyword: null },
+        { id: "cell_7", label: "자율", req: false, keyword: TARGET_QR_KEYWORD },
+        { id: "cell_8", label: "자율", req: false, keyword: TARGET_QR_KEYWORD }
     ];
 
+    let currentScanningCell = null;
     let html5QrcodeScanner = null;
     let uploadedImageBase64 = "";
     let isBoothCollapsed = false;
@@ -427,17 +444,101 @@
     function renderBingoBoard() {
         const board = document.getElementById('bingoBoard');
         board.innerHTML = "";
-        bingoLayout.forEach((item, index) => {
+        const stamps = JSON.parse(localStorage.getItem('myStamps') || '[]');
+
+        bingoLayout.forEach((item) => {
+            const isChecked = stamps.includes(item.id);
             const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.id = `cell_${index}`;
-            cell.setAttribute('data-category', item.targetCategory || '자율');
+            cell.className = `cell ${isChecked ? 'checked' : ''}`;
+            cell.id = item.id;
+
+            let actionHTML = "";
+            if (isChecked) {
+                actionHTML = `<div class="cell-stamp-tag">⭐ 완료</div>`;
+            } else {
+                actionHTML = `<button class="cell-scan-btn" onclick="openCellScanner('${item.id}', '${item.label.replace('<br>', ' ')}')">📷 스캔</button>`;
+            }
+
             cell.innerHTML = `
-                <div>${item.label}</div>
-                ${item.req ? '<div class="cat-tag">(필수)</div>' : '<div class="cat-tag">(자율)</div>'}
+                <div>
+                    <div>${item.label}</div>
+                    ${item.req ? '<div class="cat-tag">(필수)</div>' : '<div class="cat-tag">(자율)</div>'}
+                </div>
+                ${actionHTML}
             `;
             board.appendChild(cell);
         });
+    }
+
+    // 각 칸 스캔 클릭 시 모달 카메레 실행
+    function openCellScanner(cellId, cellLabel) {
+        currentScanningCell = bingoLayout.find(c => c.id === cellId);
+        document.getElementById('qrModalTitle').innerText = `📷 [${cellLabel}] QR 스캔`;
+        document.getElementById('qrModal').style.display = 'flex';
+        
+        isProcessingScan = false;
+        html5QrcodeScanner = new Html5Qrcode("qr-reader-modal");
+        html5QrcodeScanner.start(
+            { facingMode: "environment" }, 
+            { fps: 10, qrbox: 220 }, 
+            onScanSuccess
+        ).catch(err => {
+            alert("카메라 권한을 허용해 주세요.");
+            closeQRModal();
+        });
+    }
+
+    function closeQRModal() {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => {
+                html5QrcodeScanner = null;
+                document.getElementById('qr-reader-modal').innerHTML = "";
+                document.getElementById('qrModal').style.display = 'none';
+            }).catch(() => {
+                html5QrcodeScanner = null;
+                document.getElementById('qrModal').style.display = 'none';
+            });
+        } else {
+            document.getElementById('qrModal').style.display = 'none';
+        }
+    }
+
+    // ⭐ 스캔 검증 로직
+    function onScanSuccess(decodedText) {
+        if (isProcessingScan) return;
+        isProcessingScan = true;
+
+        let scannedText = decodedText.trim().toLowerCase();
+        
+        if (currentScanningCell) {
+            const requiredKeyword = currentScanningCell.keyword;
+
+            // 특정 QR 코드 검증이 필요한 칸인 경우 (과학, 사회, 예체능, 자율 4개)
+            if (requiredKeyword) {
+                if (scannedText.includes(requiredKeyword)) {
+                    saveStamp(currentScanningCell.id, currentScanningCell.label);
+                } else {
+                    alert("❌ 올바른 부스 QR 코드가 아닙니다!\n지정된 QR 코드를 스캔해주세요.");
+                    setTimeout(() => { isProcessingScan = false; }, 1500);
+                }
+            } 
+            // 기타 칸일 경우
+            else {
+                saveStamp(currentScanningCell.id, currentScanningCell.label);
+            }
+        }
+    }
+
+    function saveStamp(cellId, labelName) {
+        let stamps = JSON.parse(localStorage.getItem('myStamps') || '[]');
+        if (!stamps.includes(cellId)) {
+            stamps.push(cellId);
+            localStorage.setItem('myStamps', JSON.stringify(stamps));
+        }
+        alert(`🎉 [${labelName.replace('<br>', ' ')}] 스탬프가 적립되었습니다!`);
+        closeQRModal();
+        renderBingoBoard();
+        checkBingo();
     }
 
     function handleFileSelect(input) {
@@ -494,7 +595,6 @@
     }
 
     function logout() {
-        if(html5QrcodeScanner) { stopScanner(); }
         localStorage.clear();
         location.reload();
     }
@@ -502,7 +602,8 @@
     function openMainPage() {
         document.getElementById('loginGate').style.display = 'none';
         document.getElementById('userInfo').innerText = `${localStorage.getItem('studentName')}(${localStorage.getItem('studentId')})`;
-        loadSavedStamps();
+        renderBingoBoard();
+        checkBingo();
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -527,130 +628,9 @@
         button.innerText = button.classList.contains('active') ? '★' : '☆';
     }
 
-    function toggleQRScanner() {
-        const btn = document.getElementById('scanCtrlBtn');
-        if (!html5QrcodeScanner) {
-            btn.innerText = "🛑 스캐너 시스템 종료";
-            btn.style.background = "#e5989b";
-            startScanner();
-        } else {
-            btn.innerText = "📷 부스 QR 스캔 시작";
-            btn.style.background = "#b56576";
-            stopScanner();
-        }
-    }
-
-    function startScanner() {
-        isProcessingScan = false;
-        html5QrcodeScanner = new Html5Qrcode("qr-reader");
-        html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 230 }, onScanSuccess).catch(err => {
-            alert("카메라 권한을 확인해주세요.");
-            toggleQRScanner();
-        });
-    }
-
-    function stopScanner() {
-        if (html5QrcodeScanner) {
-            html5QrcodeScanner.stop().then(() => { html5QrcodeScanner = null; document.getElementById('qr-reader').innerHTML = ""; });
-        }
-    }
-
-    // ⭐ 핵심 수정된 스캔 인식 로직
-    function onScanSuccess(decodedText) {
-        if (isProcessingScan) return;
-        isProcessingScan = true;
-
-        if (html5QrcodeScanner) {
-            html5QrcodeScanner.pause(true);
-        }
-
-        let val = decodedText.trim().toLowerCase();
-        let stamps = JSON.parse(localStorage.getItem('myStamps') || '[]');
-        let filledMessage = "";
-
-        // 1️⃣ [과학 / 자율] QR 코드 (URL에 s8b2k5hi 포함 시 최우선 인식)
-        if (val.includes("s8b2k5hi")) {
-            if (!stamps.includes("cell_0")) {
-                stamps.push("cell_0");
-                filledMessage = "🌸 [과학] 영역 스탬프를 획득했습니다!";
-            } else {
-                const freeIndices = [4, 5, 7, 8];
-                for (let idx of freeIndices) {
-                    const cellId = `cell_${idx}`;
-                    if (!stamps.includes(cellId)) {
-                        stamps.push(cellId);
-                        filledMessage = "🌸 [자율] 영역 스탬프를 획득했습니다!";
-                        break;
-                    }
-                }
-            }
-
-            if (filledMessage) {
-                localStorage.setItem('myStamps', JSON.stringify(stamps));
-                loadSavedStamps();
-                alert(filledMessage);
-            } else {
-                alert("이미 과학 및 자율 영역 스탬프를 모두 획득하셨습니다!");
-            }
-        } 
-        // 2️⃣ [사회 / 예체능] QR 코드 (s8b2k5hi가 없이 open.kakao.com만 포함 시 인식)
-        else if (val.includes("open.kakao.com")) {
-            if (!stamps.includes("cell_1")) {
-                stamps.push("cell_1");
-                filledMessage = "🌸 [사회] 영역 스탬프를 획득했습니다!";
-            } else if (!stamps.includes("cell_2")) {
-                stamps.push("cell_2");
-                filledMessage = "🌸 [예체능] 영역 스탬프를 획득했습니다!";
-            }
-
-            if (filledMessage) {
-                localStorage.setItem('myStamps', JSON.stringify(stamps));
-                loadSavedStamps();
-                alert(filledMessage);
-            } else {
-                alert("이미 사회 및 예체능 영역 스탬프를 모두 획득하셨습니다!");
-            }
-        } 
-        // 3️⃣ 기타 QR 코드 -> 자율 영역 적립
-        else {
-            const freeIndices = [4, 5, 7, 8];
-            for (let idx of freeIndices) {
-                const cellId = `cell_${idx}`;
-                if (!stamps.includes(cellId)) {
-                    stamps.push(cellId);
-                    filledMessage = "🌸 [자율] 영역 스탬프를 획득했습니다!";
-                    break;
-                }
-            }
-
-            if (filledMessage) {
-                localStorage.setItem('myStamps', JSON.stringify(stamps));
-                loadSavedStamps();
-                alert(filledMessage);
-            } else {
-                alert("이미 자율 스탬프를 모두 획득하셨습니다!");
-            }
-        }
-
-        setTimeout(() => {
-            isProcessingScan = false;
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.resume();
-            }
-        }, 1500);
-    }
-
-    function loadSavedStamps() {
-        const stamps = JSON.parse(localStorage.getItem('myStamps') || '[]');
-        document.querySelectorAll('.cell').forEach(cell => {
-            if (stamps.includes(cell.id)) cell.classList.add('checked');
-            else cell.classList.remove('checked');
-        });
-        checkBingo();
-    }
-
     function checkBingo() {
-        const cells = Array.from(document.querySelectorAll('.cell')).map(c => c.classList.contains('checked'));
+        const stamps = JSON.parse(localStorage.getItem('myStamps') || '[]');
+        const cells = bingoLayout.map(item => stamps.includes(item.id));
         let lines = 0;
         
         // 가로줄
