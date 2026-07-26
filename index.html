@@ -362,15 +362,15 @@
 
     // 빙고판 9칸 설정
     const bingoLayout = [
-        { type: "fixed", label: "과학", targetCategory: "과학", req: true },                  // 0번 칸
-        { type: "fixed", label: "사회", targetCategory: "사회 경제 언론", req: true },         // 1번 칸
-        { type: "fixed", label: "예체능", targetCategory: "예체능", req: true },               // 2번 칸
-        { type: "fixed", label: "교육·수학<br>진로·건축", targetCategory: "교육 수학 진로 건축", req: true }, // 3번 칸
-        { type: "free", label: "자율", req: false },                                            // 4번 칸
-        { type: "free", label: "자율", req: false },                                            // 5번 칸
-        { type: "fixed", label: "보건·의료<br>도서·방송", targetCategory: "보건 의료 도서 방송", req: true }, // 6번 칸
-        { type: "free", label: "자율", req: false },                                            // 7번 칸
-        { type: "free", label: "자율", req: false }                                             // 8번 칸
+        { type: "fixed", label: "과학", targetCategory: "과학", req: true },                  // cell_0
+        { type: "fixed", label: "사회", targetCategory: "사회 경제 언론", req: true },         // cell_1
+        { type: "fixed", label: "예체능", targetCategory: "예체능", req: true },               // cell_2
+        { type: "fixed", label: "교육·수학<br>진로·건축", targetCategory: "교육 수학 진로 건축", req: true }, // cell_3
+        { type: "free", label: "자율", req: false },                                            // cell_4
+        { type: "free", label: "자율", req: false },                                            // cell_5
+        { type: "fixed", label: "보건·의료<br>도서·방송", targetCategory: "보건 의료 도서 방송", req: true }, // cell_6
+        { type: "free", label: "자율", req: false },                                            // cell_7
+        { type: "free", label: "자율", req: false }                                             // cell_8
     ];
 
     let html5QrcodeScanner = null;
@@ -555,7 +555,7 @@
         }
     }
 
-    // ⭐ 스캔 판별 로직 (한 번 스캔할 때마다 1개씩 순차 적립)
+    // ⭐ 스캔 판별 정밀 로직 (대소문자 무시 및 1개씩 순차 적립)
     function onScanSuccess(decodedText) {
         if (isProcessingScan) return;
         isProcessingScan = true;
@@ -564,12 +564,13 @@
             html5QrcodeScanner.pause(true);
         }
 
-        let val = decodedText.trim();
+        // 소문자로 변환하여 비교 (대소문자 오차 방지)
+        let val = decodedText.trim().toLowerCase();
         let stamps = JSON.parse(localStorage.getItem('myStamps') || '[]');
         let filledMessage = "";
 
-        // 1️⃣ 첫 번째 QR 코드 (s8B2K5hi 키워드 포함) -> 스캔 시 [과학] -> [자율] 순으로 1개씩 적립
-        if (val.includes("s8B2K5hi")) {
+        // 1️⃣ 첫 번째 QR 코드 (s8b2k5hi 키워드 포함) -> [과학] 적립 후 [자율] 순차 적립
+        if (val.includes("s8b2k5hi")) {
             if (!stamps.includes("cell_0")) {
                 stamps.push("cell_0");
                 filledMessage = "🌸 [과학] 영역 스탬프를 획득했습니다!";
@@ -593,7 +594,7 @@
                 alert("이미 과학 및 자율 영역 스탬프를 모두 획득하셨습니다!");
             }
         } 
-        // 2️⃣ 두 번째 QR 코드 (open.kakao.com 링크 포함) -> 스캔 시 [사회] -> [예체능] 순으로 1개씩 적립
+        // 2️⃣ 두 번째 QR 코드 (open.kakao.com 키워드 포함) -> [사회] 적립 후 [예체능] 순차 적립
         else if (val.includes("open.kakao.com")) {
             if (!stamps.includes("cell_1")) {
                 stamps.push("cell_1");
