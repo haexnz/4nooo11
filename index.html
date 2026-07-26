@@ -373,18 +373,18 @@
         { id: 30, name: "본부부스", category: "본부", loc: "본관 2층 (201/202강의실)" }
     ];
 
-    // ⭐ 요청받은 특정 QR 코드 키워드 (s8b2k5hi)
+    // ⭐ 요청받은 특정 QR 코드 키워드 (오픈카톡 URL / s8b2k5hi)
     const TARGET_QR_KEYWORD = "s8b2k5hi";
 
-    // 9개 칸 구성 (과학, 사회, 예체능, 자율 4개에 지정 QR 승인 적용)
+    // 9개 칸 구성 (과학, 사회, 예체능, 자율 4개만 TARGET_QR_KEYWORD 등록, 나머지 2개는 등록 안됨)
     const bingoLayout = [
         { id: "cell_0", label: "과학", req: true, keyword: TARGET_QR_KEYWORD },
         { id: "cell_1", label: "사회", req: true, keyword: TARGET_QR_KEYWORD },
         { id: "cell_2", label: "예체능", req: true, keyword: TARGET_QR_KEYWORD },
-        { id: "cell_3", label: "교육·수학<br>진로·건축", req: true, keyword: null },
+        { id: "cell_3", label: "교육·수학<br>진로·건축", req: true, keyword: "UNREGISTERED_NONE" },
         { id: "cell_4", label: "자율", req: false, keyword: TARGET_QR_KEYWORD },
         { id: "cell_5", label: "자율", req: false, keyword: TARGET_QR_KEYWORD },
-        { id: "cell_6", label: "보건·의료<br>도서·방송", req: true, keyword: null },
+        { id: "cell_6", label: "보건·의료<br>도서·방송", req: true, keyword: "UNREGISTERED_NONE" },
         { id: "cell_7", label: "자율", req: false, keyword: TARGET_QR_KEYWORD },
         { id: "cell_8", label: "자율", req: false, keyword: TARGET_QR_KEYWORD }
     ];
@@ -470,7 +470,7 @@
         });
     }
 
-    // 각 칸 스캔 클릭 시 모달 카메레 실행
+    // 각 칸 스캔 클릭 시 모달 카메라 실행
     function openCellScanner(cellId, cellLabel) {
         currentScanningCell = bingoLayout.find(c => c.id === cellId);
         document.getElementById('qrModalTitle').innerText = `📷 [${cellLabel}] QR 스캔`;
@@ -503,7 +503,7 @@
         }
     }
 
-    // ⭐ 스캔 검증 로직
+    // ⭐ 엄격한 QR 스캔 검증 로직
     function onScanSuccess(decodedText) {
         if (isProcessingScan) return;
         isProcessingScan = true;
@@ -513,18 +513,12 @@
         if (currentScanningCell) {
             const requiredKeyword = currentScanningCell.keyword;
 
-            // 특정 QR 코드 검증이 필요한 칸인 경우 (과학, 사회, 예체능, 자율 4개)
-            if (requiredKeyword) {
-                if (scannedText.includes(requiredKeyword)) {
-                    saveStamp(currentScanningCell.id, currentScanningCell.label);
-                } else {
-                    alert("❌ 올바른 부스 QR 코드가 아닙니다!\n지정된 QR 코드를 스캔해주세요.");
-                    setTimeout(() => { isProcessingScan = false; }, 1500);
-                }
-            } 
-            // 기타 칸일 경우
-            else {
+            // 등록된 키워드와 일치할 때만 승인
+            if (requiredKeyword && requiredKeyword !== "UNREGISTERED_NONE" && scannedText.includes(requiredKeyword)) {
                 saveStamp(currentScanningCell.id, currentScanningCell.label);
+            } else {
+                alert("❌ 올바른 부스 QR 코드가 아닙니다!\n지정된 QR 코드를 스캔해주세요.");
+                setTimeout(() => { isProcessingScan = false; }, 1500);
             }
         }
     }
