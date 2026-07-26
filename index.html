@@ -555,7 +555,7 @@
         }
     }
 
-    // ⭐ 스캔 판별 정밀 로직 (대소문자 무시 및 1개씩 순차 적립)
+    // ⭐ 핵심 수정된 스캔 인식 로직
     function onScanSuccess(decodedText) {
         if (isProcessingScan) return;
         isProcessingScan = true;
@@ -564,12 +564,11 @@
             html5QrcodeScanner.pause(true);
         }
 
-        // 소문자로 변환하여 비교 (대소문자 오차 방지)
         let val = decodedText.trim().toLowerCase();
         let stamps = JSON.parse(localStorage.getItem('myStamps') || '[]');
         let filledMessage = "";
 
-        // 1️⃣ 첫 번째 QR 코드 (s8b2k5hi 키워드 포함) -> [과학] 적립 후 [자율] 순차 적립
+        // 1️⃣ [과학 / 자율] QR 코드 (URL에 s8b2k5hi 포함 시 최우선 인식)
         if (val.includes("s8b2k5hi")) {
             if (!stamps.includes("cell_0")) {
                 stamps.push("cell_0");
@@ -594,7 +593,7 @@
                 alert("이미 과학 및 자율 영역 스탬프를 모두 획득하셨습니다!");
             }
         } 
-        // 2️⃣ 두 번째 QR 코드 (open.kakao.com 키워드 포함) -> [사회] 적립 후 [예체능] 순차 적립
+        // 2️⃣ [사회 / 예체능] QR 코드 (s8b2k5hi가 없이 open.kakao.com만 포함 시 인식)
         else if (val.includes("open.kakao.com")) {
             if (!stamps.includes("cell_1")) {
                 stamps.push("cell_1");
@@ -612,7 +611,7 @@
                 alert("이미 사회 및 예체능 영역 스탬프를 모두 획득하셨습니다!");
             }
         } 
-        // 3️⃣ 기타 QR 코드 -> 자율 영역 스탬프 1개 적립
+        // 3️⃣ 기타 QR 코드 -> 자율 영역 적립
         else {
             const freeIndices = [4, 5, 7, 8];
             for (let idx of freeIndices) {
