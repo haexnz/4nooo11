@@ -642,15 +642,15 @@
         const btn = document.getElementById('submitBingo');
         if (lines >= 3) {
             btn.removeAttribute('disabled');
-            btn.innerText = "🎁 보상 상품 교환하기 (달성 완료!)";
+            btn.innerText = "🎁 제출하기 (달성 완료!)";
         } else {
             btn.setAttribute('disabled', 'true');
-            btn.innerText = `🎁 상품 교환하기 (${lines}/3 줄 완성)`;
+            btn.innerText = `🎁 제출하기 (${lines}/3 줄 완성)`;
         }
     }
 
     function submitPrize() {
-        alert(`🎉 상품 교환 접수 완료!\n운영 본부석(본관 2층 201/202강의실)에서 확인 후 상품을 수령하세요.`);
+        alert(`🎉 제출 완료!\n운영 본부석으로 보내집니다.`);
     }
 </script>
 </body>
